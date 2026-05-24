@@ -8,10 +8,10 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  SafeAreaView,
   StatusBar,
   ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 
 export function ConfigScreen({ initialConfig, onSave, onCancel, showCancel }) {
@@ -34,22 +34,16 @@ export function ConfigScreen({ initialConfig, onSave, onCancel, showCancel }) {
 
   const handleSave = async () => {
     setError('');
-
     const cleanApiKey = apiKey.trim();
     const cleanWebhookUrl = webhookUrl.trim();
 
-    if (!cleanApiKey) {
-      setError('A chave de API é obrigatória.');
-      return;
-    }
-
-    if (!cleanWebhookUrl) {
-      setError('A URL do Webhook é obrigatória.');
+    if (!cleanApiKey || !cleanWebhookUrl) {
+      setError('Todos os campos são obrigatórios.');
       return;
     }
 
     if (!validateUrl(cleanWebhookUrl)) {
-      setError('Por favor, insira uma URL de Webhook válida (começando com http:// ou https://).');
+      setError('Insira uma URL válida.');
       return;
     }
 
@@ -57,7 +51,7 @@ export function ConfigScreen({ initialConfig, onSave, onCancel, showCancel }) {
       setIsSaving(true);
       await onSave(cleanApiKey, cleanWebhookUrl);
     } catch (err) {
-      setError('Erro ao salvar as configurações. Tente novamente.');
+      setError('Erro ao salvar.');
     } finally {
       setIsSaving(false);
     }
@@ -65,54 +59,40 @@ export function ConfigScreen({ initialConfig, onSave, onCancel, showCancel }) {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle="dark-content" />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
       >
         <ScrollView contentContainerStyle={styles.scrollContent} bounces={false}>
-          {/* Neon Background Glows */}
-          <View style={styles.glow1} />
-          <View style={styles.glow2} />
-
           <View style={styles.header}>
-            <Text style={styles.title}>Configurações</Text>
-            <Text style={styles.subtitle}>
-              Configure suas credenciais para enviar gravações de voz automaticamente.
-            </Text>
+            <Text style={styles.title}>Acesso</Text>
+            <Text style={styles.subtitle}>Configure suas chaves para sincronização.</Text>
           </View>
 
-          <View style={styles.card}>
+          <View style={styles.form}>
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>API Key</Text>
+              <Text style={styles.label}>Chave de API</Text>
               <TextInput
                 style={styles.input}
                 value={apiKey}
-                onChangeText={(text) => {
-                  setError('');
-                  setApiKey(text);
-                }}
-                placeholder="Insira sua chave de API"
-                placeholderTextColor="rgba(255, 255, 255, 0.3)"
+                onChangeText={(text) => { setError(''); setApiKey(text); }}
+                placeholder="Insira sua chave"
+                placeholderTextColor="#A0A0A0"
                 autoCapitalize="none"
-                autoCorrect={false}
               />
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Webhook URL</Text>
+              <Text style={styles.label}>Webhook</Text>
               <TextInput
                 style={styles.input}
                 value={webhookUrl}
-                onChangeText={(text) => {
-                  setError('');
-                  setWebhookUrl(text);
-                }}
-                placeholder="https://seu-webhook.com/audio"
-                placeholderTextColor="rgba(255, 255, 255, 0.3)"
+                onChangeText={(text) => { setError(''); setWebhookUrl(text); }}
+                placeholder="https://..."
+                placeholderTextColor="#A0A0A0"
                 keyboardType="url"
                 autoCapitalize="none"
-                autoCorrect={false}
               />
             </View>
 
@@ -122,29 +102,13 @@ export function ConfigScreen({ initialConfig, onSave, onCancel, showCancel }) {
               onPress={handleSave}
               activeOpacity={0.8}
               disabled={isSaving}
-              style={styles.saveButtonContainer}
+              style={styles.saveButton}
             >
-              <LinearGradient
-                colors={['#8F00FF', '#FF007F']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.saveButton}
-              >
-                {isSaving ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <Text style={styles.saveButtonText}>Salvar Configuração</Text>
-                )}
-              </LinearGradient>
+              {isSaving ? <ActivityIndicator color="#FFF" /> : <Text style={styles.saveButtonText}>Conectar</Text>}
             </TouchableOpacity>
 
-            {showCancel && onCancel && (
-              <TouchableOpacity
-                onPress={onCancel}
-                activeOpacity={0.7}
-                disabled={isSaving}
-                style={styles.cancelButton}
-              >
+            {showCancel && (
+              <TouchableOpacity onPress={onCancel} style={styles.cancelButton}>
                 <Text style={styles.cancelButtonText}>Voltar</Text>
               </TouchableOpacity>
             )}
@@ -158,68 +122,40 @@ export function ConfigScreen({ initialConfig, onSave, onCancel, showCancel }) {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#0A0812',
+    backgroundColor: '#F3F3F3',
   },
   keyboardView: {
     flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: 24,
-    justifyContent: 'center',
-    paddingVertical: 40,
-  },
-  glow1: {
-    position: 'absolute',
-    top: -100,
-    right: -100,
-    width: 300,
-    height: 300,
-    borderRadius: 150,
-    backgroundColor: 'rgba(143, 0, 255, 0.15)',
-    filter: 'blur(80px)',
-    pointerEvents: 'none',
-  },
-  glow2: {
-    position: 'absolute',
-    bottom: -100,
-    left: -100,
-    width: 300,
-    height: 300,
-    borderRadius: 150,
-    backgroundColor: 'rgba(255, 0, 127, 0.15)',
-    filter: 'blur(80px)',
-    pointerEvents: 'none',
+    paddingHorizontal: 28,
+    paddingTop: 60,
   },
   header: {
-    marginBottom: 40,
-    alignItems: 'center',
+    marginBottom: 48,
   },
   title: {
-    fontSize: 32,
+    fontSize: 34,
     fontWeight: '800',
-    color: '#FFF',
-    marginBottom: 12,
-    letterSpacing: 0.5,
+    color: '#000',
+    letterSpacing: -1,
   },
   subtitle: {
     fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.6)',
-    textAlign: 'center',
-    lineHeight: 24,
-    paddingHorizontal: 12,
+    color: '#000',
+    opacity: 0.5,
+    marginTop: 8,
   },
-  card: {
-    backgroundColor: 'rgba(255, 255, 255, 0.03)',
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
-    padding: 24,
+  form: {
+    backgroundColor: '#FFF',
+    borderRadius: 32,
+    padding: 32,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.05,
     shadowRadius: 20,
-    elevation: 5,
+    elevation: 4,
   },
   inputGroup: {
     marginBottom: 24,
@@ -227,35 +163,29 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: 'rgba(255, 255, 255, 0.8)',
+    color: '#000',
     marginBottom: 8,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
   },
   input: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 12,
+    backgroundColor: '#F9F9F9',
+    borderRadius: 16,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 16,
-    color: '#FFF',
+    color: '#000',
+    borderWidth: 1,
+    borderColor: '#F0F0F0',
   },
   errorText: {
-    color: '#FF4B4B',
-    fontSize: 14,
-    marginBottom: 20,
+    color: '#FF3B30',
     textAlign: 'center',
-    fontWeight: '500',
-  },
-  saveButtonContainer: {
-    borderRadius: 12,
-    overflow: 'hidden',
-    marginTop: 8,
+    marginBottom: 20,
+    fontSize: 14,
   },
   saveButton: {
-    paddingVertical: 16,
+    backgroundColor: '#0D47FF',
+    height: 56,
+    borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -263,17 +193,14 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontSize: 16,
     fontWeight: '700',
-    letterSpacing: 0.5,
   },
   cancelButton: {
-    marginTop: 16,
-    paddingVertical: 12,
+    marginTop: 20,
     alignItems: 'center',
-    justifyContent: 'center',
   },
   cancelButtonText: {
-    color: 'rgba(255, 255, 255, 0.5)',
-    fontSize: 15,
+    color: '#000',
+    opacity: 0.4,
     fontWeight: '600',
   },
 });
